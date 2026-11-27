@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07060b">
+  <meta name="description" content="Merry Christmas, 朵朵。一棵由星尘汇成的动态 3D 圣诞树。">
+  <meta property="og:title" content="Merry Christmas, 朵朵">
+  <meta property="og:description" content="粉白星尘在冬夜中汇成一棵圣诞树。">
+  <meta name="format-detection" content="telephone=no">
+  <title>Merry Christmas, 朵朵</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --paper: #fff3f1;
+      --rose: #f5bdcc;
+      --muted: #c8adb7;
+      --side: clamp(30px, 9vw, 148px);
+      --sans: "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body { background: #07060b; color: var(--paper); font-family: var(--sans); }
+    main {
+      isolation: isolate; position: relative; height: 100%;
+      background:
+        radial-gradient(ellipse at 66% 57%, #2913339c, transparent 55%),
+        radial-gradient(ellipse at 89% 15%, #16152d, transparent 54%),
+        #07060b;
+    }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    .particles { pointer-events: none; }
+    .greeting {
+      position: absolute; top: 47%; left: var(--side); transform: translateY(-50%);
+      pointer-events: none;
+    }
+    h1 {
+      margin: 0; font-family: "Baskerville", "Times New Roman", serif;
+      font-weight: 400; font-style: italic; font-size: clamp(62px, 7.6vw, 126px);
+      line-height: .85; letter-spacing: -.07em;
+      text-shadow: 0 0 34px #efadbd46;
+    }
+    .english span { display: block; }
+    .english span + span { margin-top: .055em; }
+    .name {
+      display: block; margin-top: .7em; padding-left: .17em;
+      color: #f4b8d7; font: 400 clamp(23px, 2.6vw, 42px)/1.3 "Songti SC", "SimSun", serif;
+      letter-spacing: .17em; text-shadow: 0 0 25px #f197ca70;
+    }
+    button {
+      appearance: none; border: 1px solid #eed1df35; border-radius: 100px;
+      color: var(--paper); background: #211525e0; font: 12px/1 var(--sans);
+      min-height: 44px; cursor: pointer; padding: 0 15px;
+      transition: border-color .18s, background .18s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:hover { border-color: #f5bdcc99; background: #372336; }
+    button:focus-visible { outline: 2px solid var(--rose); outline-offset: 4px; }
+    .footer {
+      position: absolute; bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+      left: var(--side); right: var(--side); display: flex; justify-content: space-between;
+      gap: 8px; align-items: center; pointer-events: none;
+    }
+    .hint { color: var(--muted); margin: 0; font-size: 12px; letter-spacing: .09em; }
+    .controls { display: flex; gap: 7px; pointer-events: auto; }
+    .controls button { color: var(--muted); background: #120e19d9; white-space: nowrap; }
+    #music { display: inline-flex; align-items: center; gap: 5px; }
+    #music[aria-pressed="true"] { color: #ffd6e9; border-color: #f4a9d16b; }
+    .music-note { font-size: 15px; line-height: 1; }
+    @media (max-width: 720px) and (orientation: portrait) {
+      main { background: radial-gradient(ellipse at 50% 58%, #24132f, #100c19 42%, #07060b 78%); }
+      .greeting {
+        top: max(6%, calc(env(safe-area-inset-top, 0px) + 20px)); left: 12px; right: 12px;
+        transform: none; text-align: center;
+      }
+      h1 { font-size: clamp(32px, 11vw, 68px); line-height: 1; letter-spacing: -.062em; }
+      .english span { display: inline; }
+      .name { margin-top: 10px; font-size: 22px; }
+      .footer {
+        left: 15px; right: 15px; bottom: calc(13px + env(safe-area-inset-bottom, 0px));
+        flex-direction: column; gap: 8px;
+      }
+      .hint { font-size: 11px; letter-spacing: 0; }
+      .controls button { padding: 0 10px; }
+    }
+    @media (max-height: 560px) and (orientation: portrait) {
+      .greeting { top: max(4%, calc(env(safe-area-inset-top, 0px) + 10px)); }
+      .name { margin-top: 5px; font-size: 18px; }
+    }
+    @media (max-height: 480px) and (orientation: landscape) {
+      :root { --side: 6vw; }
+      h1 { font-size: clamp(36px, 7vw, 63px); }
+      .footer { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <canvas class="particles" aria-hidden="true"></canvas>
+    <canvas class="scene" aria-label="由粉白星尘和螺旋光带组成的立体圣诞树" role="img"></canvas>
+    <section class="greeting" aria-labelledby="greeting-title">
+      <h1 id="greeting-title"><span class="english" lang="en"><span>Merry</span> <span>Christmas,</span></span> <span class="name">朵朵</span></h1>
+    </section>
+    <footer class="footer">
+      <p class="hint">拖动旋转 · 点击撒下星光</p>
+      <div class="controls">
+        <button id="rotation" type="button">暂停旋转</button>
+        <button id="snow" type="button" aria-pressed="true">飘雪：开</button>
+        <button id="music" type="button" aria-pressed="false" title="Last Christmas">
+          <span class="music-note" aria-hidden="true">♪</span><span id="music-label">音乐：关</span>
+        </button>
+      </div>
+    </footer>
+    <audio id="soundtrack" src="./Last%20Christmas-Taylor%2BSwift.mp3" preload="none" loop></audio>
+  </main>
+  <script>
+    'use strict';
+    const canvas = document.querySelector('.scene');
+    const particleCanvas = document.querySelector('.particles');
+    const ctx = canvas.getContext('2d');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const smallDevice = innerWidth <= 720 || matchMedia('(pointer: coarse)').matches;
+    const tau = Math.PI * 2;
+    let seed = 251226;
+    function random() {
+      seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    }
+
+    // Each point has a 3D position, brightness, radius and shimmer phase.
+    function makeCloud(count, color, point) {
+      const data = new Float32Array(count * 6);
+      for (let i = 0; i < count; i++) data.set(point(), i * 6);
+      return { data, color };
+    }
+    function polar(angle, radius, y, alpha, size) {
+      return [radius * Math.cos(angle), y, radius * Math.sin(angle), alpha, size, random() * tau];
+    }
+    const ground = makeCloud(smallDevice ? 3300 : 7700, '#aa8ce9', () => {
+      const ring = Math.floor(random() * 8);
+      const angle = random() * tau;
+      return polar(angle, 55 + ring * 39 + (random() - .5) * (4 + ring * 1.1),
+        -193 + (random() - .5) * 4, (.40 - ring * .043) * (.48 + random() * .52), .46 + random() * 1.04);
+    });
+    const orbit = makeCloud(smallDevice ? 1150 : 2250, '#f59acd', () => {
+      const t = random();
+      const angle = t * tau * 2.2 + (random() - .5) * .055;
+      return polar(angle, 90 + t * 205 + (random() - .5) * 6, -190 + random() * 3,
+        (.29 + .12 * Math.sin(angle * 2)) * (1 - t * .62), .46 + random() * 1.04);
+    });
+    const needles = ['#f28eb7', '#f8c8de', '#ffedea'].map((color, band) => makeCloud(
+      (smallDevice ? [2900, 3700, 1200] : [5400, 7100, 2500])[band], color, () => {
+        const t = random();
+        const angle = random() * tau;
+        const branch = .94 + .07 * Math.cos(t * tau * 8.1 + .52 * Math.sin(angle * 3));
+        const radius = 146 * Math.pow(1 - t, 1.09) * branch * (.36 + .64 * Math.sqrt(random()));
+        return polar(angle, radius, -177 + t * 418, .23 + .56 * random(), .44 + random() * 1.18);
+      }
+    ));
+    const ribbonTurns = 5.65;
+    function ribbonPoint(t, spread) {
+      const angle = t * tau * ribbonTurns + (random() - .5) * spread * .036;
+      const radius = 158 * Math.pow(1 - t, 1.05) + (random() - .5) * spread;
+      return [angle, radius, -181 + 421 * t + (random() - .5) * spread];
+    }
+    const ribbonHaze = makeCloud(smallDevice ? 2050 : 3850, '#fc83bf', () => {
+      const t = random();
+      return polar(...ribbonPoint(t, 11 + 9 * (1 - t)), .17 + random() * .45, .55 + random());
+    });
+    const ribbonCore = makeCloud(smallDevice ? 2800 : 4900, '#ffe2ef', () => {
+      const t = random();
+      return polar(...ribbonPoint(t, .9 + 4 * (1 - t)), .40 + random() * .50, .65 + random() * 1.37);
+    });
+    const clouds = [ground, orbit, ...needles, ribbonHaze, ribbonCore];
+    const dust = Array.from({ length: smallDevice ? 95 : 165 }, () => ({
+      t: random(), angle: random() * tau, spread: random() * 41, phase: random() * tau,
+    }));
+    const stars = Array.from({ length: smallDevice ? 165 : 310 }, () => ({
+      x: random(), y: random(), size: .28 + random() * .95, phase: random() * tau,
+    }));
+    const flakes = Array.from({ length: smallDevice ? 105 : 170 }, () => ({
+      x: random(), y: random(), depth: random(), phase: random() * tau,
+    }));
+
+    function glowSprite(color) {
+      const sprite = document.createElement('canvas');
+      sprite.width = sprite.height = 64;
+      const paint = sprite.getContext('2d');
+      const glow = paint.createRadialGradient(32, 32, 0, 32, 32, 32);
+      glow.addColorStop(0, '#fff8f4');
+      glow.addColorStop(.10, color);
+      glow.addColorStop(.33, color + '65');
+      glow.addColorStop(1, color + '00');
+      paint.fillStyle = glow;
+      paint.fillRect(0, 0, 64, 64);
+      return sprite;
+    }
+    const pink = glowSprite('#ff9dc0');
+    const white = glowSprite('#eedaff');
+    const lilac = glowSprite('#a8b0ff');
+    function glow(sprite, x, y, radius, alpha) {
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(sprite, x - radius, y - radius, radius * 2, radius * 2);
+    }
+
+    let width, height, scale, centerX, centerY, pixelRatio;
+    let yaw = .64, pitch = .20, spin = !reducedMotion, snow = !reducedMotion;
+    let time = 0, last = 0, request = 0, drag = null;
+    let cosYaw, sinYaw, cosPitch, sinPitch;
+    const sparks = [];
+
+    // The GPU projects the same particle data used by the Canvas 2D fallback.
+    function createParticleRenderer() {
+      const gl = particleCanvas.getContext('webgl', { alpha: true, antialias: false });
+      if (!gl) return null;
+      const program = gl.createProgram();
+      function compile(type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          gl.attachShader(program, shader);
+          gl.deleteShader(shader);
+          return true;
+        }
+        gl.deleteShader(shader);
+        return false;
+      }
+      const vertex = compile(gl.VERTEX_SHADER, `
+        attribute vec3 aPosition, aSpark;
+        uniform vec2 uViewport, uCenter;
+        uniform vec4 uView;
+        uniform float uTime, uScale, uDensity, uReveal, uRibbon;
+        varying float vAlpha;
+        void main() {
+          vec3 p = aPosition;
+          float height = clamp((p.y + 193.0) / 435.0, 0.0, 1.0);
+          float phase = aSpark.z;
+          float gather = smoothstep(0.0, 1.0, uReveal * 1.6 - height * .6);
+          float scatter = (1.0 - gather) * (42.0 + 72.0 * fract(phase * 2.33));
+          float wind = phase + (1.0 - gather) * 2.3;
+          p.xz += scatter * vec2(cos(wind), sin(wind));
+          p.y -= scatter * sin(phase * 1.36) * .42;
+          float x = p.x * uView.x - p.z * uView.y;
+          float z = p.x * uView.y + p.z * uView.x;
+          float depth = z * uView.z + p.y * uView.w;
+          float zoom = 845.0 / (845.0 - depth);
+          vec2 screen = uCenter + vec2(x, z * uView.w - p.y * uView.z) * zoom * uScale;
+          gl_Position = vec4(screen / uViewport * vec2(2.0, -2.0) + vec2(-1.0, 1.0), 0.0, 1.0);
+          gl_PointSize = max(1.2, aSpark.y * zoom * uScale * uDensity * 2.05);
+          float sweep = pow(.5 + .5 * cos(height * 24.0 - uTime * 3.1), 7.0);
+          float shimmer = .80 + .20 * sin(uTime * 1.75 + phase);
+          vAlpha = aSpark.x * min(1.0, .80 + depth / 620.0) *
+            (shimmer + sweep * uRibbon * .55) * mix(.26, 1.0, gather);
+        }
+      `);
+      const fragment = compile(gl.FRAGMENT_SHADER, `
+        precision mediump float;
+        uniform vec3 uColor;
+        varying float vAlpha;
+        void main() {
+          vec2 offset = 2.0 * gl_PointCoord - 1.0;
+          float distance = dot(offset, offset);
+          float light = exp(-4.5 * distance) * (1.0 - smoothstep(.65, 1.0, distance));
+          gl_FragColor = vec4(uColor, clamp(vAlpha * light, 0.0, 1.0));
+        }
+      `);
+      if (vertex && fragment) gl.linkProgram(program);
+      if (!vertex || !fragment || !gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        gl.deleteProgram(program);
+        return null;
+      }
+      const positions = gl.getAttribLocation(program, 'aPosition');
+      const sparkData = gl.getAttribLocation(program, 'aSpark');
+      const uniforms = Object.fromEntries([
+        'Viewport', 'Center', 'View', 'Time', 'Scale', 'Density', 'Reveal', 'Ribbon', 'Color',
+      ].map(name => [name, gl.getUniformLocation(program, 'u' + name)]));
+      const layers = clouds.map(cloud => {
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, cloud.data, gl.STATIC_DRAW);
+        const color = cloud.color.slice(1).match(/../g).map(channel => parseInt(channel, 16) / 255);
+        return { buffer, color, count: cloud.data.length / 6, ribbon: Number(cloud === ribbonHaze || cloud === ribbonCore) };
+      });
+      gl.useProgram(program);
+      gl.enableVertexAttribArray(positions);
+      gl.enableVertexAttribArray(sparkData);
+      gl.enable(gl.BLEND);
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.clearColor(0, 0, 0, 0);
+      return reveal => {
+        gl.viewport(0, 0, particleCanvas.width, particleCanvas.height);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.uniform2f(uniforms.Viewport, width, height);
+        gl.uniform2f(uniforms.Center, centerX, centerY);
+        gl.uniform4f(uniforms.View, cosYaw, sinYaw, cosPitch, sinPitch);
+        gl.uniform1f(uniforms.Time, time);
+        gl.uniform1f(uniforms.Scale, scale);
+        gl.uniform1f(uniforms.Density, pixelRatio);
+        gl.uniform1f(uniforms.Reveal, reveal);
+        for (const layer of layers) {
+          gl.bindBuffer(gl.ARRAY_BUFFER, layer.buffer);
+          gl.vertexAttribPointer(positions, 3, gl.FLOAT, false, 24, 0);
+          gl.vertexAttribPointer(sparkData, 3, gl.FLOAT, false, 24, 12);
+          gl.uniform3fv(uniforms.Color, layer.color);
+          gl.uniform1f(uniforms.Ribbon, layer.ribbon);
+          gl.drawArrays(gl.POINTS, 0, layer.count);
+        }
+      };
+    }
+    let drawParticles = createParticleRenderer();
+    particleCanvas.addEventListener('webglcontextlost', event => {
+      event.preventDefault();
+      drawParticles = null;
+      paint();
+    });
+    particleCanvas.addEventListener('webglcontextrestored', () => {
+      drawParticles = createParticleRenderer();
+      paint();
+    });
+
+    function resize() {
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      pixelRatio = Math.min(devicePixelRatio || 1, smallDevice ? 1.65 : 2);
+      canvas.width = Math.round(width * pixelRatio);
+      canvas.height = Math.round(height * pixelRatio);
+      particleCanvas.width = canvas.width;
+      particleCanvas.height = canvas.height;
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      const portrait = width <= 720 && height > width;
+      centerX = width * (portrait ? .5 : .659);
+      centerY = height * (portrait ? .515 : .48);
+      scale = portrait
+        ? Math.min(width / 370, height * .51 / 470)
+        : Math.min(width * .62 / 600, height * .79 / 520);
+      paint();
+    }
+    function project(x, y, z) {
+      const rx = x * cosYaw - z * sinYaw;
+      const rz = x * sinYaw + z * cosYaw;
+      const depth = rz * cosPitch + y * sinPitch;
+      const zoom = 845 / (845 - depth);
+      return [centerX + rx * zoom * scale, centerY - (y * cosPitch - rz * sinPitch) * zoom * scale, zoom];
+    }
+    function drawCloud(cloud, reveal) {
+      const { data, color } = cloud;
+      const bright = cloud === ribbonCore;
+      ctx.fillStyle = color;
+      for (let i = 0; i < data.length; i += 6) {
+        let x = data[i], y = data[i + 1], z = data[i + 2];
+        const phase = data[i + 5];
+        const fraction = Math.min(1, Math.max(0, (y + 193) / 435));
+        let gather = 1;
+        if (reveal < 1) {
+          const progress = Math.min(1, Math.max(0, reveal * 1.6 - fraction * .6));
+          gather = progress * progress * (3 - 2 * progress);
+          const scatter = (1 - gather) * (42 + 72 * ((phase * 2.33) % 1));
+          const wind = phase + (1 - gather) * 2.3;
+          x += scatter * Math.cos(wind);
+          z += scatter * Math.sin(wind);
+          y -= scatter * Math.sin(phase * 1.36) * .42;
+        }
+        const rx = x * cosYaw - z * sinYaw;
+        const rz = x * sinYaw + z * cosYaw;
+        const depth = rz * cosPitch + y * sinPitch;
+        const zoom = 845 / (845 - depth);
+        const px = centerX + rx * zoom * scale;
+        const py = centerY - (y * cosPitch - rz * sinPitch) * zoom * scale;
+        if (px < -2 || px > width + 2 || py < -2 || py > height + 2) continue;
+        const size = Math.max(.41, data[i + 4] * zoom * scale);
+        const sweep = bright ? .42 * Math.pow(.5 + .5 * Math.cos(fraction * 24 - time * 3.1), 7) : 0;
+        const shimmer = .81 + .19 * Math.sin(time * 1.75 + phase) + sweep;
+        const light = Math.min(1, .74 + depth / 620);
+        ctx.globalAlpha = Math.min(1, data[i + 3] * shimmer * light * (.26 + gather * .74));
+        ctx.fillRect(px - size * .5, py - size * .5, size, size);
+        if (bright && i % 120 === 0) glow(white, px, py, 8.5 * scale * zoom, .30 * shimmer * light);
+      }
+    }
+    function drawTopper(reveal) {
+      const [x, y] = project(0, 248, 0);
+      const size = (14 + Math.sin(time * 1.6) * 1.5) * scale;
+      glow(pink, x, y, size * 4.1, .62 * reveal);
+      glow(white, x, y, size * 1.50, .90 * reveal);
+      for (let i = 0; i < 8; i++) {
+        const angle = i * tau / 8;
+        const ray = size * (i % 2 ? .43 : i % 4 === 0 ? .76 : 1.16);
+        ctx.globalAlpha = (i % 2 ? .47 : .88) * reveal;
+        ctx.fillStyle = '#ffede9';
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(angle) * ray, y + Math.sin(angle) * ray);
+        ctx.lineTo(x + Math.cos(angle + Math.PI / 2) * size * .115, y + Math.sin(angle + Math.PI / 2) * size * .115);
+        ctx.lineTo(x + Math.cos(angle - Math.PI / 2) * size * .115, y + Math.sin(angle - Math.PI / 2) * size * .115);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    function drawComet(point, sprite, reveal) {
+      for (let i = 25; i >= 0; i--) {
+        const [x, y, zoom] = point(i * .012);
+        const core = 1 - i / 26;
+        glow(sprite, x, y, (4 + core * 9) * scale * zoom, (core * core * .72) * reveal);
+      }
+    }
+    function paint() {
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.clearRect(0, 0, width, height);
+      cosYaw = Math.cos(yaw);
+      sinYaw = Math.sin(yaw);
+      cosPitch = Math.cos(pitch);
+      sinPitch = Math.sin(pitch);
+      const reveal = reducedMotion ? 1 : Math.min(1, time / 1.9);
+      if (drawParticles) drawParticles(reveal);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = '#ead9f7';
+      for (const star of stars) {
+        ctx.globalAlpha = .12 + .27 * Math.pow(.5 + .5 * Math.sin(time * .62 + star.phase), 2);
+        ctx.fillRect(star.x * width, star.y * height, star.size, star.size);
+      }
+      const [baseX, baseY] = project(0, -193, 0);
+      const halo = 125 * scale;
+      ctx.globalAlpha = .15;
+      ctx.drawImage(pink, baseX - halo, baseY - halo * .29, halo * 2, halo * .58);
+      if (!drawParticles) {
+        for (const layer of clouds) drawCloud(layer, reveal);
+      }
+      if (!reducedMotion) {
+        const rise = (time * .115 + .22) % 1;
+        drawComet(delay => {
+          const t = Math.max(0, rise - delay * .19);
+          const angle = t * tau * ribbonTurns;
+          const radius = 158 * Math.pow(1 - t, 1.05);
+          return project(Math.cos(angle) * radius, -181 + t * 421, Math.sin(angle) * radius);
+        }, pink, reveal * Math.sin(Math.PI * rise));
+        drawComet(delay => {
+          const angle = time * .8 - delay * 2.2;
+          return project(Math.cos(angle) * 206, -192, Math.sin(angle) * 206);
+        }, lilac, reveal * .76);
+      }
+      for (const point of dust) {
+        const t = (point.t + time * .025) % 1;
+        const angle = point.angle + time * .19 + t * tau;
+        const radius = 155 * Math.pow(1 - t, 1.04) + point.spread;
+        const [x, y, zoom] = project(Math.cos(angle) * radius, -179 + t * 423, Math.sin(angle) * radius);
+        const light = Math.pow(.5 + .5 * Math.sin(time * 1.9 + point.phase), 4);
+        glow(pink, x, y, (2.3 + 4.8 * light) * scale * zoom, (.17 + light * .6) * Math.sin(t * Math.PI));
+      }
+      drawTopper(.18 + .82 * reveal * reveal);
+      if (snow) {
+        ctx.fillStyle = '#fff4f8';
+        for (const flake of flakes) {
+          const x = flake.x * width + Math.sin(time * .35 + flake.phase) * (8 + 18 * flake.depth);
+          const y = ((flake.y + time * (.013 + .027 * flake.depth)) % 1.05 - .03) * height;
+          const size = .42 + flake.depth * 1.16;
+          if (flake.depth > .91) {
+            glow(white, x, y, size * 4, .37);
+          } else {
+            ctx.globalAlpha = .19 + .33 * flake.depth;
+            ctx.fillRect(x, y, size, size);
+          }
+        }
+      }
+      for (const p of sparks) {
+        const age = time - p.start;
+        glow(pink, p.x + age * p.vx, p.y + age * p.vy + 21 * age * age,
+          p.size * (1 - age / 2), p.alpha * (1 - age / 1.4));
+      }
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    function wake() {
+      if (!request && !document.hidden && (!reducedMotion || spin || snow || sparks.length)) {
+        request = requestAnimationFrame(frame);
+      }
+    }
+    function frame(stamp) {
+      request = 0;
+      if (smallDevice && last && stamp - last < 29) {
+        wake();
+        return;
+      }
+      const dt = last ? Math.min(.05, (stamp - last) / 1000) : 0;
+      last = stamp;
+      time += dt;
+      if (spin && !drag) yaw += dt * .19;
+      while (sparks.length && time - sparks[0].start >= 1.4) sparks.shift();
+      paint();
+      wake();
+    }
+    function burst(x, y) {
+      if (reducedMotion) return;
+      while (sparks.length > 180) sparks.shift();
+      for (let i = 0; i < 51; i++) {
+        const angle = random() * tau;
+        const speed = 25 + random() * 125;
+        sparks.push({
+          x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 22,
+          size: 2 + random() * 6, alpha: .38 + random() * .62, start: time,
+        });
+      }
+      wake();
+    }
+    function begin(id, point) {
+      if (drag) return false;
+      drag = { id, x: point.clientX, y: point.clientY, distance: 0 };
+      return true;
+    }
+    function move(id, point) {
+      if (!drag || drag.id !== id) return;
+      const dx = point.clientX - drag.x, dy = point.clientY - drag.y;
+      drag.distance += Math.abs(dx) + Math.abs(dy);
+      drag.x = point.clientX;
+      drag.y = point.clientY;
+      yaw += dx * .008;
+      pitch = Math.max(.03, Math.min(.55, pitch + dy * .004));
+      if (!request) paint();
+    }
+    function end(id, point) {
+      if (!drag || drag.id !== id) return;
+      if (point) {
+        startMusicOnScene();
+        if (drag.distance < 8) burst(point.clientX, point.clientY);
+      }
+      drag = null;
+    }
+    if ('PointerEvent' in window) {
+      canvas.addEventListener('pointerdown', event => {
+        if (event.button === 0 && begin(event.pointerId, event)) canvas.setPointerCapture(event.pointerId);
+      });
+      canvas.addEventListener('pointermove', event => move(event.pointerId, event));
+      canvas.addEventListener('pointerup', event => end(event.pointerId, event));
+      canvas.addEventListener('pointercancel', event => end(event.pointerId));
+      canvas.addEventListener('lostpointercapture', event => end(event.pointerId));
+    } else {
+      canvas.addEventListener('touchstart', event => {
+        event.preventDefault();
+        const touch = event.changedTouches[0];
+        begin(touch.identifier, touch);
+      }, { passive: false });
+      canvas.addEventListener('touchmove', event => {
+        event.preventDefault();
+        for (const touch of Array.from(event.changedTouches)) move(touch.identifier, touch);
+      }, { passive: false });
+      canvas.addEventListener('touchend', event => {
+        for (const touch of Array.from(event.changedTouches)) end(touch.identifier, touch);
+      });
+      canvas.addEventListener('touchcancel', () => { drag = null; });
+      canvas.addEventListener('mousedown', event => { if (event.button === 0) begin('mouse', event); });
+      addEventListener('mousemove', event => move('mouse', event));
+      addEventListener('mouseup', event => end('mouse', event));
+    }
+    const rotationButton = document.getElementById('rotation');
+    const snowButton = document.getElementById('snow');
+    function updateControls() {
+      rotationButton.textContent = spin ? '暂停旋转' : '继续旋转';
+      snowButton.textContent = snow ? '飘雪：开' : '飘雪：关';
+      snowButton.setAttribute('aria-pressed', String(snow));
+    }
+    rotationButton.addEventListener('click', () => { spin = !spin; updateControls(); wake(); });
+    snowButton.addEventListener('click', () => { snow = !snow; updateControls(); paint(); wake(); });
+    const music = document.getElementById('soundtrack');
+    const musicButton = document.getElementById('music');
+    const musicLabel = document.getElementById('music-label');
+    let playOnScene = true;
+    function updateMusic() {
+      const playing = !music.paused && !music.error;
+      musicButton.setAttribute('aria-pressed', String(playing));
+      musicLabel.textContent = music.error ? '重试音乐' : playing ? '音乐：开' : '音乐：关';
+    }
+    function playMusic() {
+      if (music.error) music.load();
+      const attempt = music.play();
+      if (attempt) attempt.catch(updateMusic);
+    }
+    function startMusicOnScene() {
+      if (!playOnScene) return;
+      playOnScene = false;
+      if (music.paused) playMusic();
+    }
+    music.volume = .45;
+    for (const event of ['play', 'pause', 'error', 'emptied']) music.addEventListener(event, updateMusic);
+    music.addEventListener('playing', () => { playOnScene = false; });
+    musicButton.addEventListener('click', () => {
+      playOnScene = false;
+      if (music.paused || music.error) playMusic();
+      else music.pause();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && request) cancelAnimationFrame(request);
+      request = 0;
+      last = 0;
+      wake();
+    });
+    addEventListener('resize', resize);
+    updateControls();
+    resize();
+    wake();
+    playMusic();
+  </script>
+</body>
+</html>
