@@ -61,12 +61,33 @@
       left: var(--side); right: var(--side); display: flex; justify-content: space-between;
       gap: 8px; align-items: center; pointer-events: none;
     }
-    .hint { color: var(--muted); margin: 0; font-size: 12px; letter-spacing: .09em; }
-    .controls { display: flex; gap: 7px; pointer-events: auto; }
-    .controls button { color: var(--muted); background: #120e19d9; white-space: nowrap; }
-    #music { display: inline-flex; align-items: center; gap: 5px; }
-    #music[aria-pressed="true"] { color: #ffd6e9; border-color: #f4a9d16b; }
-    .music-note { font-size: 15px; line-height: 1; }
+    .hint { color: var(--muted); margin: 0; font-size: 12px; letter-spacing: .09em; transition: opacity .8s ease; }
+    .hint.is-hidden { opacity: 0; }
+    .controls { display: flex; gap: 9px; align-items: center; pointer-events: auto; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    #music, .settings-toggle {
+      box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 50%;
+      border: 1px solid #eed1df24; color: #c8adb7; background: #120e197a;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      transition: color .2s, border-color .2s, background .2s;
+    }
+    #music:hover, .settings-toggle:hover, .scene-settings[open] .settings-toggle { color: #fff3f1; border-color: #eed1df55; background: #241827c9; }
+    #music[aria-pressed="true"] { color: #ffd6e9; border-color: #f4a9d16b; background: #33202f99; }
+    .music-note { font-size: 20px; line-height: 1; }
+    .scene-settings { position: relative; }
+    .settings-toggle { list-style: none; font: 22px/1 var(--sans); }
+    .settings-toggle::-webkit-details-marker { display: none; }
+    .settings-toggle::marker { content: ''; }
+    .settings-toggle:focus-visible { outline: 2px solid var(--rose); outline-offset: 4px; }
+    .settings-panel {
+      position: absolute; right: 0; bottom: 56px; min-width: 148px; padding: 6px;
+      border: 1px solid #eed1df24; border-radius: 18px; background: #17101feb;
+      box-shadow: 0 12px 36px #0005; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    }
+    .settings-panel button { display: block; width: 100%; padding: 0 14px; border: 0; border-radius: 12px; color: var(--muted); background: transparent; text-align: left; white-space: nowrap; }
+    .settings-panel button:hover { color: var(--paper); background: #f5bdcc12; }
     @media (max-width: 720px) and (orientation: portrait) {
       main { background: radial-gradient(ellipse at 50% 58%, #24132f, #100c19 42%, #07060b 78%); }
       .greeting {
@@ -78,10 +99,9 @@
       .name { margin-top: 10px; font-size: 22px; }
       .footer {
         left: 15px; right: 15px; bottom: calc(13px + env(safe-area-inset-bottom, 0px));
-        flex-direction: column; gap: 8px;
+        justify-content: flex-end; gap: 8px;
       }
-      .hint { font-size: 11px; letter-spacing: 0; }
-      .controls button { padding: 0 10px; }
+      .hint { position: absolute; left: 0; right: 0; bottom: 60px; text-align: center; font-size: 11px; letter-spacing: 0; }
     }
     @media (max-height: 560px) and (orientation: portrait) {
       .greeting { top: max(4%, calc(env(safe-area-inset-top, 0px) + 10px)); }
@@ -107,11 +127,16 @@
     <footer class="footer">
       <p class="hint">拖动旋转 · 点击撒下星光</p>
       <div class="controls">
-        <button id="rotation" type="button">暂停旋转</button>
-        <button id="snow" type="button" aria-pressed="true">飘雪：开</button>
-        <button id="music" type="button" aria-pressed="false" title="Last Christmas">
-          <span class="music-note" aria-hidden="true">♪</span><span id="music-label">音乐：关</span>
+        <button id="music" type="button" aria-pressed="false" title="背景音乐 · Last Christmas">
+          <span class="music-note" aria-hidden="true">♪</span><span id="music-label" class="sr-only">音乐：关</span>
         </button>
+        <details class="scene-settings" id="scene-settings">
+          <summary class="settings-toggle" title="场景设置"><span aria-hidden="true">⋯</span><span class="sr-only">场景设置</span></summary>
+          <div class="settings-panel" role="group" aria-label="场景设置">
+            <button id="rotation" type="button">暂停旋转</button>
+            <button id="snow" type="button" aria-pressed="true">飘雪：开</button>
+          </div>
+        </details>
       </div>
     </footer>
     <audio id="soundtrack" src="./Last%20Christmas-Taylor%2BSwift.mp3" preload="none" loop></audio>
@@ -553,6 +578,21 @@
       addEventListener('mousemove', event => move('mouse', event));
       addEventListener('mouseup', event => end('mouse', event));
     }
+    const sceneSettings = document.getElementById('scene-settings');
+    document.addEventListener('pointerdown', event => {
+      if (sceneSettings.open && !sceneSettings.contains(event.target)) sceneSettings.open = false;
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && sceneSettings.open) {
+        sceneSettings.open = false;
+        sceneSettings.querySelector('summary').focus();
+      }
+    });
+    setTimeout(() => {
+      const hint = document.querySelector('.hint');
+      hint.classList.add('is-hidden');
+      setTimeout(() => { hint.style.visibility = 'hidden'; }, 800);
+    }, 6000);
     const rotationButton = document.getElementById('rotation');
     const snowButton = document.getElementById('snow');
     function updateControls() {
